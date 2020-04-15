@@ -1,5 +1,14 @@
 # Bastion Host configuration script
 
+#---------------------------------
+#  ____  _   _ ____  ______ _   _ 
+# |  _ \| | | |  _ \ \  ___) | | |
+# | |_) ) |_| | |_) ) \ \  | |_| |
+# |  _ (|  _  |  _ (   > > |  _  |
+# | |_) ) | | | |_) ) / /__| | | |
+# |____/|_| |_|____(_)_____)_| |_|
+#---------------------------------
+
 *From Wikipedia:*
 
 *A bastion host is a special-purpose computer on a network specifically designed and configured to withstand attacks. The computer generally hosts a single application, for example a proxy server, and all other services are removed or limited to reduce the threat to the computer.*
