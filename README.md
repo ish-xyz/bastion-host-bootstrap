@@ -11,5 +11,7 @@ If you run on AWS it will also configure the CloudWatch Agent to export logs.
 
 The script will perform the following actions:
 
-* Install tripwire as IDS (Intrusion Detection System).
+* Install and configure the Intrusion Detection System (TripWire)
+* Remove useless packages
+* Enable (if not already) the rp_filter to prevent IP spoofing
 * 

@@ -1,8 +1,19 @@
 #!/bin/bash
-#
-##
-## Configure Bastion host for Amazon Linux 2 & CentOS
-## Testing on ami-06ce3edf0cff21f07
+
+#---------------------------------
+#  ____  _   _ ____  ______ _   _ 
+# |  _ \| | | |  _ \ \  ___) | | |
+# | |_) ) |_| | |_) ) \ \  | |_| |
+# |  _ (|  _  |  _ (   > > |  _  |
+# | |_) ) | | | |_) ) / /__| | | |
+# |____/|_| |_|____(_)_____)_| |_|
+#---------------------------------
+# Author: Isham J. Araia
+# Date: Wed Apr 15 20:39:53 UTC 2020
+# Description:
+## Configure Bastion host for Amazon Linux 2 & CentOS 8 Server Minimal
+## AWS tests:
+## AMI -> ami-06ce3edf0cff21f07
 
 set -e
 
@@ -36,8 +47,20 @@ sanity_checks() {
 }
 
 setup_metadata() {
+
     # Setup SSH banner
-    
+    cat <<EOF > /etc/motd
+ ___ _  _ ___   ___ _  _ 
+| _ ) || | _ ) / __| || |
+| _ \ __ | _ \_\__ \ __ |
+|___/_||_|___(_)___/_||_|   
+---------------------------
+Authorized access only!                         
+Disconnect IMMEDIATELY if you are not an authorized user!
+All actions will be monitored and recorded.
+---------------------------
+EOF
+
     # Setup bation hostname
     echo ${BH_HOSTNAME} > /etc/hostname
     hostname ${BH_HOSTNAME}
@@ -112,6 +135,10 @@ configure_ids() {
 enable_rp_filtering() {
     # Usually is enabled by default - but still we want to make sure that the rp_filter is enabled.
     echo "rp_filter"
+}
+
+setup_iptables() {
+    echo "setup iptables rules"
 }
 
 sanity_checks
