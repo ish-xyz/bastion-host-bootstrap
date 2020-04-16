@@ -152,7 +152,6 @@ kernel_variables_setup() {
 
     # Disable forward as this server doesn't needs to be a router/gateway
     sysctl -w net.ipv4.conf.all.forwarding=0
-    sysctl -w net.ipv6.conf.all.forwarding=0
     
     # We don't need to forward multicast packets, \
         # so there's no point to keep it enabled
