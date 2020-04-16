@@ -39,7 +39,7 @@ tw_site_pass=$(head -c 13 /dev/urandom | base64 | tr -dc A-Za-z0-9)
 removed_packages=(unzip GeoIP cloud-init perl-* make strace awscli bind-utils bzip2 zip postfix traceroute)
 
 setup_metadata() {
-
+    echo "Enter: ${FUNCNAME}"
     # Setup SSH banner
     cat <<EOF > /etc/ssh_banner
  ___ _  _ ___   ___ _  _ 
@@ -60,6 +60,7 @@ EOF
     hostname ${BH_HOSTNAME}
     hostnamectl set-hostname ${BH_HOSTNAME}
     export HOSTNAME=${BH_HOSTNAME}
+    echo "Exit: ${FUNCNAME}"
 }
 
 os_release() {
@@ -69,8 +70,10 @@ os_release() {
 }
 
 remove_packages() {
+    echo "Enter: ${FUNCNAME}"
     # On the Amazon linux 2 AMI we detected this packages as not useful for a Bastion Host 
     yum remove -y ${removed_packages}
+    echo "Exit: ${FUNCNAME}"
 }
 
 configure_ids() {
@@ -113,7 +116,9 @@ configure_ids() {
 
     # Test if report gets generated
     rm -f /var/lib/tripwire/report/*.twr
-    tripwire --check -L ${tw_lcl_key}
+    
+    # Ignoring errors here
+    tripwire --check -L ${tw_lcl_key} |  true
     if [[ -z $(ls /var/lib/tripwire/report/*.twr) ]]; then
         echo "ERROR: Tripwire is not generating reports."
         exit 1
@@ -136,10 +141,11 @@ setup_auto_sec_update() {
 }
 
 kernel_variables_setup() {
+    echo "Enter: ${FUNCNAME}"
 
     # Ignore ICMP ECHO (Disable PING)
-    sysctl –w net.ipv4.icmp_echo_ignore_all=1
-    sysctl –w net.ipv6.icmp_echo_ignore_all=1
+    sysctl -w net.ipv4.icmp_echo_ignore_all=1
+    sysctl -w net.ipv6.icmp_echo_ignore_all=1
 
     # Disable forward as this server doesn't needs to be a router/gateway
     sysctl -w net.ipv4.conf.all.forwarding=0
@@ -167,10 +173,12 @@ kernel_variables_setup() {
     # Log all martian packets
     systctl -w net.ipv4.conf.all.log_martians=1
 
+    echo "Exit: ${FUNCNAME}"
 }
 
 
 iptables_setup() {
+    echo "Enter: ${FUNCNAME}"
     # Bastion host iptables setup
 
     IPT="/sbin/iptables"
@@ -205,7 +213,7 @@ iptables_setup() {
     
     # Prevent SYN Flooding
     ${IPT} -A INPUT -i eth0 -p tcp --syn -m limit --limit 5/second -j ACCEPT
-
+    echo "Exit: ${FUNCNAME}"
 }
 
 
