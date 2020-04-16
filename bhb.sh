@@ -41,12 +41,11 @@ removed_packages=(unzip GeoIP cloud-init perl-* make strace awscli bind-utils bz
 setup_metadata() {
     echo "Enter: ${FUNCNAME}"
 
-    if [[ ${OS_RELEASE} == "amzn" ]]; then
-        rm -rf /etc/update-motd.d/*banner
-    fi
+    # Setup MOTD
+    cat <<EOB > /etc/update-motd.d/30-banner
+#!/bin/sh
 
-    # Setup SSH banner
-    cat <<EOF > /etc/ssh_banner
+cat <<EOF
  ___ _  _ ___   ___ _  _ 
 | _ ) || | _ ) / __| || |
 | _ \ __ | _ \_\__ \ __ |
@@ -57,8 +56,8 @@ Disconnect IMMEDIATELY if you are not an authorized user!
 All actions will be monitored and recorded.
 ---------------------------
 EOF
-
-    echo -e "\nBanner /etc/ssh_banner" >> /etc/ssh/sshd_config
+EOB
+    update-motd --enable
 
     # Setup bation hostname
     echo ${BH_HOSTNAME} > /etc/hostname
@@ -110,8 +109,9 @@ configure_ids() {
     # Initialize Tripwire
     tripwire --init -P ${tw_lcl_pass} -L ${tw_lcl_key}
 
-    # Continue on errors
+    # Continue on errors until the end of the function
     set +e
+
     # Fix tripwire filesystem errors
     tripwire --check -L ${tw_lcl_key} | grep Filename > ${TMPF1}
     cat ${TMPF1} | awk {'print $2'} | while read l; do 
@@ -124,18 +124,17 @@ configure_ids() {
     # Test if report gets generated
     rm -f /var/lib/tripwire/report/*.twr
     
-    # Ignoring errors here
     tripwire --check -L ${tw_lcl_key}
     if [[ -z $(ls /var/lib/tripwire/report/*.twr) ]]; then
         echo "ERROR: Tripwire is not generating reports."
         exit 1
     fi
-    set -e
-
     if ! [ -f "/etc/cron.daily/tripwire-check" ]; then
         echo "tripwire --check -L ${tw_lcl_key}" > /etc/cron.daily/tripwire-check
         chmod +x /etc/cron.daily/tripwire-check
     fi
+
+    set -e
     echo "Exit: ${FUNCNAME}"
 }
 
@@ -211,7 +210,7 @@ iptables_setup() {
     # Allow DNS queries
 
     for dnsip in $(cat /etc/resolv.conf | grep ^nameserver | awk {'print $2'}); do
-        echo "Allowing DNS lookups (tcp, udp port 53) to server '$ip'"
+        echo "Allowing DNS lookups (tcp, udp port 53) to server '${dnsip}'"
         ${IPT} -A OUTPUT -p udp -d ${dnsip} --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT
         ${IPT} -A INPUT  -p udp -s ${dnsip} --sport 53 -m state --state ESTABLISHED     -j ACCEPT
         ${IPT} -A OUTPUT -p tcp -d ${dnsip} --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT
@@ -235,34 +234,31 @@ if [[ -n $1 ]]; then
     source $1
 fi
 
-setup_metadata
 
-if [[ ${AUTO_SEC_UPDATE} != 0 ]]; then
-    setup_auto_sec_update
-fi
+main() {
+    setup_metadata
+    if [[ ${AUTO_SEC_UPDATE} != 0 ]]; then
+        setup_auto_sec_update
+    fi
+    if [[ ${REMOVE_PACKAGES} != 0 ]]; then
+        remove_packages
+    fi
+    if [[ ${IDS} != 0 ]]; then
+        configure_ids
+    fi
+    if [[ ${KERNEL_TUNING} != 0 ]]; then
+        kernel_variables_setup
+    fi
+    if [[ ${IPTABLES} != 0 ]]; then
+        iptables_setup
+    fi
 
-if [[ ${REMOVE_PACKAGES} != 0 ]]; then
-    remove_packages
-fi
+    echo "Updating via YUM."
+    yum update -y
 
-if [[ ${IDS} != 0 ]]; then
-    configure_ids
-fi
+    if [[ ${REBOOT} != 0 ]]; then
+        reboot
+    fi
+}
 
-if [[ ${KERNEL_TUNING} != 0 ]]; then
-    kernel_variables_setup
-fi
-
-if [[ ${IPTABLES} != 0 ]]; then
-    iptables_setup
-fi
-
-if [[ ${REBOOT} != 0 ]]; then
-    reboot
-fi
-
-
-echo "----"
-echo "tripware local passphrase -> ${tw_lcl_pass}"
-echo "tripware site passphrase -> ${tw_site_pass}"
-echo "----"
+main
