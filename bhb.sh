@@ -21,21 +21,19 @@ if [[ ${BHB_DEBUG} == 1 ]]; then
     set -x
 fi
 
-# Const
-BH_HOSTNAME="bastion-host"
-
 # Temporary files
 TMPF1=$(mktemp)
 
 trap "rm -f ${TMPF1}" EXIT
 
-## IDS/Tripware variables
+## Vars
 tw_dir=/etc/tripwire
 tw_site_key=${tw_dir}/site.key
-tw_lcl_key=${tw_dir}/${BH_HOSTNAME}-local.key
+tw_lcl_key=${tw_dir}/${bh_hostname}-local.key
 tw_lcl_pass=$(head -c 13 /dev/urandom | base64 | tr -dc A-Za-z0-9)
 tw_site_pass=$(head -c 13 /dev/urandom | base64 | tr -dc A-Za-z0-9)
-
+bhb_hidden_dir="/root/.bhb"
+bh_hostname="bastion-host"
 removed_packages=(unzip GeoIP cloud-init perl-* make strace awscli bind-utils bzip2 zip postfix traceroute)
 
 setup_metadata() {
@@ -60,10 +58,10 @@ EOB
     update-motd --enable
 
     # Setup bation hostname
-    echo ${BH_HOSTNAME} > /etc/hostname
-    hostname ${BH_HOSTNAME}
-    hostnamectl set-hostname ${BH_HOSTNAME}
-    export HOSTNAME=${BH_HOSTNAME}
+    echo ${bh_hostname} > /etc/hostname
+    hostname ${bh_hostname}
+    hostnamectl set-hostname ${bh_hostname}
+    export HOSTNAME=${bh_hostname}
     echo "Exit: ${FUNCNAME}"
 }
 
@@ -256,6 +254,10 @@ main() {
     echo "Updating via YUM."
     yum update -y
 
+    mkdir ${bhb_hidden_dir}
+    echo ${tw_lcl_pass} > ${bhb_hidden_dir}/tw-lcl-pass
+    echo ${tw_site_pass} > ${bhb_hidden_dir}/tw-site-pass
+ 
     if [[ ${REBOOT} != 0 ]]; then
         reboot
     fi
