@@ -1,13 +1,6 @@
 # Bastion Host configuration script
 
-#---------------------------------
-#  ____  _   _ ____  ______ _   _ 
-# |  _ \| | | |  _ \ \  ___) | | |
-# | |_) ) |_| | |_) ) \ \  | |_| |
-# |  _ (|  _  |  _ (   > > |  _  |
-# | |_) ) | | | |_) ) / /__| | | |
-# |____/|_| |_|____(_)_____)_| |_|
-#---------------------------------
+!['bastion-ow'](./img/bastion.png)
 
 *From Wikipedia:*
 
@@ -16,11 +9,17 @@
 
 This repository contains a bash script that will configure and install the required tools in your bastion host.
 
-If you run on AWS it will also configure the CloudWatch Agent to export logs.
-
 The script will perform the following actions:
 
 * Install and configure the Intrusion Detection System (TripWire)
 * Remove useless packages
-* Enable (if not already) the rp_filter to prevent IP spoofing
-* 
+* Setup iptables to only allow SSH, DNS, HTTP, and HTTPS
+* Setup a crontab to run security update every day.
+* Kernel tuning to:
+    * Ignore ICMP ECHO (Disable PING)
+    * Disable forward as this server doesn't needs to work as router/gateway (Also for MultiCast Packets)
+    * Disable redirects (again it is not a router).
+    * Disable source routing (should be already disabled by default)
+    * Enable SYN flood protection
+    * Smurf attack prevention
+    * Log all martian packets

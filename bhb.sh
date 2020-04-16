@@ -17,7 +17,7 @@
 
 set -e
 
-if [[ ${BHB_LOG} == "debug" ]]; then
+if [[ ${BHB_DEBUG} == 1 ]]; then
     set -x
 fi
 
@@ -105,6 +105,8 @@ configure_ids() {
     # Initialize Tripwire
     tripwire --init -P ${tw_lcl_pass} -L ${tw_lcl_key}
 
+    # Continue on errors
+    set +e
     # Fix tripwire filesystem errors
     tripwire --check -L ${tw_lcl_key} | grep Filename > ${TMPF1}
     cat ${TMPF1} | awk {'print $2'} | while read l; do 
@@ -118,11 +120,12 @@ configure_ids() {
     rm -f /var/lib/tripwire/report/*.twr
     
     # Ignoring errors here
-    tripwire --check -L ${tw_lcl_key} |  true
+    tripwire --check -L ${tw_lcl_key}
     if [[ -z $(ls /var/lib/tripwire/report/*.twr) ]]; then
         echo "ERROR: Tripwire is not generating reports."
         exit 1
     fi
+    set -e
 
     if ! [ -f "/etc/cron.daily/tripwire-check" ]; then
         echo "tripwire --check -L ${tw_lcl_key}" > /etc/cron.daily/tripwire-check
@@ -165,7 +168,7 @@ kernel_variables_setup() {
 
     # Enable SYN flood protection
     sysctl -w net.ipv4.tcp_syncookies=1
-    sysctl -w net.ipv4.tcp_synack_retries = 
+    sysctl -w net.ipv4.tcp_synack_retries=5
 
     # Smurf attack prevention
     systctl -w net.ipv4.icmp_echo_ignore_broadcasts=1
