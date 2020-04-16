@@ -40,6 +40,11 @@ removed_packages=(unzip GeoIP cloud-init perl-* make strace awscli bind-utils bz
 
 setup_metadata() {
     echo "Enter: ${FUNCNAME}"
+
+    if [[ ${OS_RELEASE} == "amzn" ]]; then
+        rm -rf /etc/update-motd.d/*banner
+    fi
+
     # Setup SSH banner
     cat <<EOF > /etc/ssh_banner
  ___ _  _ ___   ___ _  _ 
@@ -148,10 +153,10 @@ kernel_variables_setup() {
 
     # Ignore ICMP ECHO (Disable PING)
     sysctl -w net.ipv4.icmp_echo_ignore_all=1
-    sysctl -w net.ipv6.icmp_echo_ignore_all=1
 
     # Disable forward as this server doesn't needs to be a router/gateway
     sysctl -w net.ipv4.conf.all.forwarding=0
+    sysctl -w net.ipv6.conf.all.forwarding=0
     
     # We don't need to forward multicast packets, \
         # so there's no point to keep it enabled
@@ -170,10 +175,10 @@ kernel_variables_setup() {
     sysctl -w net.ipv4.tcp_synack_retries=5
 
     # Smurf attack prevention
-    systctl -w net.ipv4.icmp_echo_ignore_broadcasts=1
+    sysctl -w net.ipv4.icmp_echo_ignore_broadcasts=1
 
     # Log all martian packets
-    systctl -w net.ipv4.conf.all.log_martians=1
+    sysctl -w net.ipv4.conf.all.log_martians=1
 
     echo "Exit: ${FUNCNAME}"
 }
